@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package message;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/imhasandl/message-service/protos";
+
+service MessageService { 
+   rpc SendMessage (SendMessageRequest) returns (SendMessageResponse) {}
+}
+
+message SendMessageRequest {
+   string sender_id = 1;
+   string receiver_id = 2;
+   string content = 3;
+}
+
+message SendMessageResponse {
+   Message message = 1;
+}
+
+message Message {
+   string id = 1;
+   google.protobuf.Timestamp sent_at = 2;
+   string sender_id = 3;
+   string receiver_id = 4;
+   string content = 5;
+}
+
+// protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative message.proto
