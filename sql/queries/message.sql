@@ -8,3 +8,7 @@ VALUES (
    $4
 )
 RETURNING *;
+
+-- name: GetMessaged :many
+SELECT * FROM messages
+WHERE sender_id = $1 and receiver_id = $2;
