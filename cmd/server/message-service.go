@@ -24,3 +24,7 @@ func NewServer(db *database.Queries, tokenSecret string) *server {
 func (s *server) SendMessage (ctx context.Context, req *pb.SendMessageRequest) (*pb.SendMessageResponse, error) {
 	return nil, nil
 }
+
+func (s *server) GetMessages (ctx context.Context, req *pb.GetMessagesRequest) (*pb.GetMessagesResponse, error) {
+	return nil, nil
+}

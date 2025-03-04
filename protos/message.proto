@@ -8,6 +8,7 @@ option go_package = "github.com/imhasandl/message-service/protos";
 
 service MessageService { 
    rpc SendMessage (SendMessageRequest) returns (SendMessageResponse) {}
+   rpc GetMessages (GetMessagesRequest) returns (GetMessagesResponse) {}
 }
 
 message SendMessageRequest {
@@ -18,6 +19,15 @@ message SendMessageRequest {
 
 message SendMessageResponse {
    Message message = 1;
+}
+
+message GetMessagesRequest {
+   string sender_id = 1;
+   string receiver_id = 2;
+}
+
+message GetMessagesResponse {
+   repeated Message message = 1;
 }
 
 message Message {
