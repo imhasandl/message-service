@@ -12,7 +12,6 @@ service MessageService {
 }
 
 message SendMessageRequest {
-   string sender_id = 1;
    string receiver_id = 2;
    string content = 3;
 }
@@ -22,7 +21,6 @@ message SendMessageResponse {
 }
 
 message GetMessagesRequest {
-   string sender_id = 1;
    string receiver_id = 2;
 }
 
