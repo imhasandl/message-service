@@ -14,6 +14,7 @@ import (
 const getMessages = `-- name: GetMessages :many
 SELECT id, sent_at, sender_id, receiver_id, content FROM messages
 WHERE sender_id = $1 and receiver_id = $2
+ORDER BY sent_at
 `
 
 type GetMessagesParams struct {
@@ -51,7 +52,7 @@ func (q *Queries) GetMessages(ctx context.Context, arg GetMessagesParams) ([]Mes
 }
 
 const sendMessage = `-- name: SendMessage :one
-INSERT INTO messages (id, send_at, sender_id, receiver_id, content) 
+INSERT INTO messages (id, sent_at, sender_id, receiver_id, content) 
 VALUES (
    $1, 
    NOW(),
