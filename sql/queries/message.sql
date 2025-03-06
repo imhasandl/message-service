@@ -1,5 +1,5 @@
 -- name: SendMessage :one
-INSERT INTO messages (id, send_at, sender_id, receiver_id, content) 
+INSERT INTO messages (id, sent_at, sender_id, receiver_id, content) 
 VALUES (
    $1, 
    NOW(),
@@ -11,4 +11,5 @@ RETURNING *;
 
 -- name: GetMessages :many
 SELECT * FROM messages
-WHERE sender_id = $1 and receiver_id = $2;
+WHERE sender_id = $1 and receiver_id = $2
+ORDER BY sent_at;
