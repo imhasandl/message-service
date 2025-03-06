@@ -11,18 +11,18 @@ import (
 	"github.com/google/uuid"
 )
 
-const getMessaged = `-- name: GetMessaged :many
+const getMessages = `-- name: GetMessages :many
 SELECT id, sent_at, sender_id, receiver_id, content FROM messages
 WHERE sender_id = $1 and receiver_id = $2
 `
 
-type GetMessagedParams struct {
+type GetMessagesParams struct {
 	SenderID   uuid.UUID
 	ReceiverID uuid.UUID
 }
 
-func (q *Queries) GetMessaged(ctx context.Context, arg GetMessagedParams) ([]Message, error) {
-	rows, err := q.db.QueryContext(ctx, getMessaged, arg.SenderID, arg.ReceiverID)
+func (q *Queries) GetMessages(ctx context.Context, arg GetMessagesParams) ([]Message, error) {
+	rows, err := q.db.QueryContext(ctx, getMessages, arg.SenderID, arg.ReceiverID)
 	if err != nil {
 		return nil, err
 	}

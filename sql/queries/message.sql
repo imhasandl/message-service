@@ -9,6 +9,6 @@ VALUES (
 )
 RETURNING *;
 
--- name: GetMessaged :many
+-- name: GetMessages :many
 SELECT * FROM messages
 WHERE sender_id = $1 and receiver_id = $2;
