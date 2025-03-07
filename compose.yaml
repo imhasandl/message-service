@@ -15,6 +15,13 @@ services:
     ports:
       - 50055:50055
 
+  rabbitmq:
+    image: 
+      rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
 # The commented out section below is an example of how to define a PostgreSQL
 # database that your application can use. `depends_on` tells Docker Compose to
 # start the database before your application. The `db-data` volume persists the

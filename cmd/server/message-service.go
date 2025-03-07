@@ -10,6 +10,7 @@ import (
 	pb "github.com/imhasandl/message-service/protos"
 	"github.com/imhasandl/post-service/cmd/auth"
 	postService "github.com/imhasandl/post-service/cmd/helper"
+	"github.com/streadway/amqp"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -55,6 +56,20 @@ func (s *server) SendMessage(ctx context.Context, req *pb.SendMessageRequest) (*
 	message, err := s.db.SendMessage(ctx, sendMessageParams)
 	if err != nil {
 		return nil, helper.RespondWithErrorGRPC(ctx, codes.Internal, "can't send message via db", err)
+	}
+
+	err = s.rabbitmq.Channel.Publish(
+		"",
+		"message_queue",
+		false,
+		false,
+		amqp.Publishing{
+			ContentType: "text/plain",
+			Body: []byte(req.GetContent()),
+		},
+	)
+	if err != nil {
+		return nil, helper.RespondWithErrorGRPC(ctx, codes.Internal, "can't publish message to RabbitMQ", err)
 	}
 
 	return &pb.SendMessageResponse{
