@@ -1,16 +1,20 @@
 package server
 
-import "log"
+import (
+	"log"
+
+	"github.com/imhasandl/message-service/internal/rabbitmq"
+)
 
 func (s *server) Consume() {
 	msgs, err := s.rabbitmq.Channel.Consume(
-		"message_queue", // queue
-		"",              // consumer
-		true,            // auto-ack
-		false,           // exclusive
-		false,           // no-local
-		false,           // no-wait
-		nil,             // args
+		rabbitmq.QueueName, // queue
+		"",                 // consumer
+		true,               // auto-ack
+		false,              // exclusive
+		false,              // no-local
+		false,              // no-wait
+		nil,                // args
 	)
 	if err != nil {
 		log.Fatalf("Failed to register a consumer: %v", err)

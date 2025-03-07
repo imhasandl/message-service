@@ -19,7 +19,7 @@ type server struct {
 	pb.UnimplementedMessageServiceServer
 	db          *database.Queries
 	tokenSecret string
-	rabbitmq *rabbitmq.RabbitMQ
+	rabbitmq    *rabbitmq.RabbitMQ
 }
 
 func NewServer(db *database.Queries, tokenSecret string, rabbitmq *rabbitmq.RabbitMQ) *server {
@@ -48,6 +48,7 @@ func (s *server) SendMessage(ctx context.Context, req *pb.SendMessageRequest) (*
 	}
 
 	sendMessageParams := database.SendMessageParams{
+		ID:         uuid.New(),
 		SenderID:   userID,
 		ReceiverID: receiverID,
 		Content:    req.GetContent(),
@@ -58,16 +59,16 @@ func (s *server) SendMessage(ctx context.Context, req *pb.SendMessageRequest) (*
 		return nil, helper.RespondWithErrorGRPC(ctx, codes.Internal, "can't send message via db", err)
 	}
 
+	// Publish message to RabbitMQ
 	err = s.rabbitmq.Channel.Publish(
-		"",
-		"message_queue",
-		false,
-		false,
+		rabbitmq.ExchangeName, // exchange
+		rabbitmq.RoutingKey,   // routing key
+		false,                 // mandatory
+		false,                 // immediate
 		amqp.Publishing{
 			ContentType: "text/plain",
-			Body: []byte(req.GetContent()),
-		},
-	)
+			Body:        []byte(req.GetContent()),
+		})
 	if err != nil {
 		return nil, helper.RespondWithErrorGRPC(ctx, codes.Internal, "can't publish message to RabbitMQ", err)
 	}
@@ -100,7 +101,7 @@ func (s *server) GetMessages(ctx context.Context, req *pb.GetMessagesRequest) (*
 	}
 
 	getMessagesParams := database.GetMessagesParams{
-		SenderID: userID,
+		SenderID:   userID,
 		ReceiverID: receiverID,
 	}
 
@@ -112,11 +113,11 @@ func (s *server) GetMessages(ctx context.Context, req *pb.GetMessagesRequest) (*
 	messagesResponse := make([]*pb.Message, len(messages))
 	for i, message := range messages {
 		messagesResponse[i] = &pb.Message{
-			Id: message.ID.String(),
-			SentAt: timestamppb.New(message.SentAt),
-			SenderId: message.SenderID.String(),
+			Id:         message.ID.String(),
+			SentAt:     timestamppb.New(message.SentAt),
+			SenderId:   message.SenderID.String(),
 			ReceiverId: message.ReceiverID.String(),
-			Content: message.Content,
+			Content:    message.Content,
 		}
 	}
 
