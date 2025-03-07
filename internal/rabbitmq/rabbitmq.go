@@ -32,9 +32,13 @@ func NewRabbitMQ(url string) (*RabbitMQ, error) {
 
 func (r *RabbitMQ) Close() {
 	if r.Channel != nil {
-		r.Channel.Close()
+		if err := r.Channel.Close(); err != nil {
+			log.Printf("error closing channel: %v", err)
+		}
 	}
 	if r.Conn != nil {
-		r.Conn.Close()
+		if err := r.Conn.Close(); err != nil {
+			log.Printf("error closing connection: %v", err)
+		}
 	}
 }
