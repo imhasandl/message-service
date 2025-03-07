@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/imhasandl/message-service/cmd/helper"
 	"github.com/imhasandl/message-service/internal/database"
+	"github.com/imhasandl/message-service/internal/rabbitmq"
 	pb "github.com/imhasandl/message-service/protos"
 	"github.com/imhasandl/post-service/cmd/auth"
 	postService "github.com/imhasandl/post-service/cmd/helper"
@@ -17,13 +18,15 @@ type server struct {
 	pb.UnimplementedMessageServiceServer
 	db          *database.Queries
 	tokenSecret string
+	rabbitmq *rabbitmq.RabbitMQ
 }
 
-func NewServer(db *database.Queries, tokenSecret string) *server {
+func NewServer(db *database.Queries, tokenSecret string, rabbitmq *rabbitmq.RabbitMQ) *server {
 	return &server{
 		pb.UnimplementedMessageServiceServer{},
 		db,
 		tokenSecret,
+		rabbitmq,
 	}
 }
 

@@ -10,6 +10,7 @@ import (
 
 	"github.com/imhasandl/message-service/cmd/server"
 	"github.com/imhasandl/message-service/internal/database"
+	"github.com/imhasandl/message-service/internal/rabbitmq"
 	pb "github.com/imhasandl/message-service/protos"
 	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
@@ -18,9 +19,7 @@ import (
 
 
 func main() {
-	if err := godotenv.Load(".env"); nil != err {
-		log.Print("searching env file ib the root directory")
-	}
+	godotenv.Load(".env")
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -37,6 +36,11 @@ func main() {
 		log.Fatalf("Set db connection in env")
 	}
 
+	rabbitmqURL := os.Getenv("RABBITMQ_URL")
+	if rabbitmqURL == "" {
+		log.Fatalf("Set rabbit mq url path")
+	}
+	
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
 		log.Fatalf("failed to listed: %v", err)
@@ -49,7 +53,13 @@ func main() {
 	dbQueries := database.New(dbConn)
 	defer dbConn.Close()
 
-	server := server.NewServer(dbQueries, tokenSecret)
+	rabbitmq, err := rabbitmq.NewRabbitMQ(rabbitmqURL)
+	if err != nil {
+		log.Fatalf("error initializing rabbit mq: %v", err)
+	}
+	defer rabbitmq.Close()
+
+	server := server.NewServer(dbQueries, tokenSecret, rabbitmq)
 
 	s := grpc.NewServer()
 	pb.RegisterMessageServiceServer(s, server)
