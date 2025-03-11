@@ -16,9 +16,7 @@ message SendMessageRequest {
    string content = 3;
 }
 
-message SendMessageResponse {
-   Message message = 1;
-}
+message SendMessageResponse {}
 
 message GetMessagesRequest {
    string receiver_id = 2;

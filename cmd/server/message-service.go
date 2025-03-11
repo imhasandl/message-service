@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/google/uuid"
 	"github.com/imhasandl/message-service/cmd/helper"
@@ -59,6 +60,16 @@ func (s *server) SendMessage(ctx context.Context, req *pb.SendMessageRequest) (*
 		return nil, helper.RespondWithErrorGRPC(ctx, codes.Internal, "can't send message via db", err)
 	}
 
+	// Create JSON message
+	messageJSON, err := json.Marshal(map[string]interface{}{
+		"receiver_id": receiverID.String(),
+		"content":     req.GetContent(),
+		"sent_at":     message.SentAt,
+	})
+	if err != nil {
+		return nil, helper.RespondWithErrorGRPC(ctx, codes.Internal, "can't marshal message to JSON", err)
+	}
+
 	// Publish message to RabbitMQ
 	err = s.rabbitmq.Channel.Publish(
 		rabbitmq.ExchangeName, // exchange
@@ -66,22 +77,14 @@ func (s *server) SendMessage(ctx context.Context, req *pb.SendMessageRequest) (*
 		false,                 // mandatory
 		false,                 // immediate
 		amqp.Publishing{
-			ContentType: "text/plain",
-			Body:        []byte(req.GetContent()),
+			ContentType: "application/json",
+			Body:        messageJSON,
 		})
 	if err != nil {
 		return nil, helper.RespondWithErrorGRPC(ctx, codes.Internal, "can't publish message to RabbitMQ", err)
 	}
 
-	return &pb.SendMessageResponse{
-		Message: &pb.Message{
-			Id:         message.ID.String(),
-			SentAt:     timestamppb.New(message.SentAt),
-			SenderId:   message.SenderID.String(),
-			ReceiverId: message.ReceiverID.String(),
-			Content:    message.Content,
-		},
-	}, nil
+	return &pb.SendMessageResponse{}, nil
 }
 
 func (s *server) GetMessages(ctx context.Context, req *pb.GetMessagesRequest) (*pb.GetMessagesResponse, error) {
