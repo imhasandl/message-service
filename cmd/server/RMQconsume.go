@@ -6,6 +6,11 @@ import (
 	"github.com/imhasandl/message-service/internal/rabbitmq"
 )
 
+// This Method is not used in any place in the project
+// This Method is not used in any place in the project
+// This Method is not used in any place in the project
+
+// Consume is a method to consume message from RabbitMQ
 func (s *server) Consume() {
 	msgs, err := s.rabbitmq.Channel.Consume(
 		rabbitmq.QueueName, // queue
