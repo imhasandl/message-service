@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/google/uuid"
 	"github.com/imhasandl/message-service/cmd/helper"
@@ -34,17 +35,22 @@ func NewServer(db *database.Queries, tokenSecret string, rabbitmq *rabbitmq.Rabb
 func (s *server) SendMessage(ctx context.Context, req *pb.SendMessageRequest) (*pb.SendMessageResponse, error) {
 	accessToken, err := auth.GetBearerTokenFromGrpc(ctx)
 	if err != nil {
-		return nil, helper.RespondWithErrorGRPC(ctx, codes.Unauthenticated, "can't get token from header", err)
+		return nil, helper.RespondWithErrorGRPC(ctx, codes.Unauthenticated, "can't get token from header - SendMessage", err)
 	}
 
 	userID, err := postService.ValidateJWT(accessToken, s.tokenSecret)
 	if err != nil {
-		return nil, helper.RespondWithErrorGRPC(ctx, codes.Unauthenticated, "can't get user id from token", err)
+		return nil, helper.RespondWithErrorGRPC(ctx, codes.Unauthenticated, "can't get user id from token - SendMessage", err)
 	}
 
 	receiverID, err := uuid.Parse(req.GetReceiverId())
 	if err != nil {
-		return nil, helper.RespondWithErrorGRPC(ctx, codes.InvalidArgument, "can't parse receiver's id to uuid", err)
+		return nil, helper.RespondWithErrorGRPC(ctx, codes.InvalidArgument, "can't parse receiver's id to uuid - SendMessage", err)
+	}
+
+	senderUserData, err := s.db.GetUserByID(ctx, userID)
+	if err != nil {
+		return nil, helper.RespondWithErrorGRPC(ctx, codes.Internal, "can;t get sender's data by id - SendMessage", err)
 	}
 
 	sendMessageParams := database.SendMessageParams{
@@ -56,7 +62,18 @@ func (s *server) SendMessage(ctx context.Context, req *pb.SendMessageRequest) (*
 
 	message, err := s.db.SendMessage(ctx, sendMessageParams)
 	if err != nil {
-		return nil, helper.RespondWithErrorGRPC(ctx, codes.Internal, "can't send message via db", err)
+		return nil, helper.RespondWithErrorGRPC(ctx, codes.Internal, "can't send message via db - SendMessage", err)
+	}
+
+	// Create JSON message
+	messageJSON, err := json.Marshal(map[string]interface{}{
+		"username":    senderUserData.Username,
+		"receiver_id": receiverID.String(),
+		"content":     req.GetContent(),
+		"sent_at":     message.SentAt,
+	})
+	if err != nil {
+		return nil, helper.RespondWithErrorGRPC(ctx, codes.Internal, "can't marshal message to JSON - SendMessage", err)
 	}
 
 	// Publish message to RabbitMQ
@@ -66,38 +83,32 @@ func (s *server) SendMessage(ctx context.Context, req *pb.SendMessageRequest) (*
 		false,                 // mandatory
 		false,                 // immediate
 		amqp.Publishing{
-			ContentType: "text/plain",
-			Body:        []byte(req.GetContent()),
+			ContentType: "application/json",
+			Body:        messageJSON,
 		})
 	if err != nil {
-		return nil, helper.RespondWithErrorGRPC(ctx, codes.Internal, "can't publish message to RabbitMQ", err)
+		return nil, helper.RespondWithErrorGRPC(ctx, codes.Internal, "can't publish message to RabbitMQ - SendMessage", err)
 	}
 
 	return &pb.SendMessageResponse{
-		Message: &pb.Message{
-			Id:         message.ID.String(),
-			SentAt:     timestamppb.New(message.SentAt),
-			SenderId:   message.SenderID.String(),
-			ReceiverId: message.ReceiverID.String(),
-			Content:    message.Content,
-		},
+		Success: true,
 	}, nil
 }
 
 func (s *server) GetMessages(ctx context.Context, req *pb.GetMessagesRequest) (*pb.GetMessagesResponse, error) {
 	accessToken, err := auth.GetBearerTokenFromGrpc(ctx)
 	if err != nil {
-		return nil, helper.RespondWithErrorGRPC(ctx, codes.InvalidArgument, "can't get user token from header", err)
+		return nil, helper.RespondWithErrorGRPC(ctx, codes.InvalidArgument, "can't get user token from header - GetMessages", err)
 	}
 
 	userID, err := postService.ValidateJWT(accessToken, s.tokenSecret)
 	if err != nil {
-		return nil, helper.RespondWithErrorGRPC(ctx, codes.Unauthenticated, "can't get user from given token", err)
+		return nil, helper.RespondWithErrorGRPC(ctx, codes.Unauthenticated, "can't get user from given token - GetMessages", err)
 	}
 
 	receiverID, err := uuid.Parse(req.GetReceiverId())
 	if err != nil {
-		return nil, helper.RespondWithErrorGRPC(ctx, codes.InvalidArgument, "can't parse receiver's id to uuid", err)
+		return nil, helper.RespondWithErrorGRPC(ctx, codes.InvalidArgument, "can't parse receiver's id to uuid - GetMessages", err)
 	}
 
 	getMessagesParams := database.GetMessagesParams{
@@ -107,7 +118,7 @@ func (s *server) GetMessages(ctx context.Context, req *pb.GetMessagesRequest) (*
 
 	messages, err := s.db.GetMessages(ctx, getMessagesParams)
 	if err != nil {
-		return nil, helper.RespondWithErrorGRPC(ctx, codes.Internal, "can't  get messages from db", err)
+		return nil, helper.RespondWithErrorGRPC(ctx, codes.Internal, "can't  get messages from db - GetMessages", err)
 	}
 
 	messagesResponse := make([]*pb.Message, len(messages))

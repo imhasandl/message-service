@@ -17,7 +17,6 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-
 func main() {
 	if err := godotenv.Load(".env"); err != nil {
 		log.Printf("Error loading .env file: %v", err)
@@ -42,7 +41,7 @@ func main() {
 	if rabbitmqURL == "" {
 		log.Fatalf("Set rabbit mq url path")
 	}
-	
+
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
 		log.Fatalf("failed to listed: %v", err)

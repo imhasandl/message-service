@@ -12,16 +12,16 @@ service MessageService {
 }
 
 message SendMessageRequest {
-   string receiver_id = 2;
-   string content = 3;
+   string receiver_id = 1;
+   string content = 2;
 }
 
 message SendMessageResponse {
-   Message message = 1;
+   bool success = 1;
 }
 
 message GetMessagesRequest {
-   string receiver_id = 2;
+   string receiver_id = 1;
 }
 
 message GetMessagesResponse {
