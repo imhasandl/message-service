@@ -67,10 +67,11 @@ func (s *server) SendMessage(ctx context.Context, req *pb.SendMessageRequest) (*
 
 	// Create JSON message
 	messageJSON, err := json.Marshal(map[string]interface{}{
-		"username":    senderUserData.Username,
-		"receiver_id": receiverID.String(),
-		"content":     req.GetContent(),
-		"sent_at":     message.SentAt,
+		"title":           "New Notification",
+		"sender_username": senderUserData.Username,
+		"receiver_id":     receiverID.String(),
+		"content":         req.GetContent(),
+		"sent_at":         message.SentAt,
 	})
 	if err != nil {
 		return nil, helper.RespondWithErrorGRPC(ctx, codes.Internal, "can't marshal message to JSON - SendMessage", err)
