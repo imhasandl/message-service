@@ -13,3 +13,7 @@ RETURNING *;
 SELECT * FROM messages
 WHERE sender_id = $1 and receiver_id = $2
 ORDER BY sent_at;
+
+-- name: DeleteMessage :exec
+DELETE FROM messages
+WHERE id = $1;
