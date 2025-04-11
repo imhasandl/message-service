@@ -137,3 +137,19 @@ func (s *server) GetMessages(ctx context.Context, req *pb.GetMessagesRequest) (*
 		Message: messagesResponse,
 	}, nil
 }
+
+func (s *server) DeleteMessage(ctx context.Context, req *pb.DeleteMessageRequest) (*pb.DeleteMessageResponse, error) {
+	messageID, err := uuid.Parse(req.GetId())
+	if err != nil {
+		return nil, helper.RespondWithErrorGRPC(ctx, codes.InvalidArgument, "can't parse message's id - DeleteMessage", err)
+	}
+
+	err = s.db.DeleteMessage(ctx, messageID)
+	if err != nil {
+		return nil, helper.RespondWithErrorGRPC(ctx, codes.Internal, "can't delete message - DeleteMessage", err)
+	}
+
+	return &pb.DeleteMessageResponse{
+		Status: true,
+	}, nil
+}

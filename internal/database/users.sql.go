@@ -9,10 +9,11 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, created_at, updated_at, email, password, username, is_premium, verification_code, is_verified FROM users
+SELECT id, created_at, updated_at, email, password, username, subscribers, subscribed_to, is_premium, verification_code, verification_expire_time, is_verified FROM users
 WHERE id = $1
 `
 
@@ -26,8 +27,11 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.Email,
 		&i.Password,
 		&i.Username,
+		pq.Array(&i.Subscribers),
+		pq.Array(&i.SubscribedTo),
 		&i.IsPremium,
 		&i.VerificationCode,
+		&i.VerificationExpireTime,
 		&i.IsVerified,
 	)
 	return i, err

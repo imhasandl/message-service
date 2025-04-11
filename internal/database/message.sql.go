@@ -11,6 +11,16 @@ import (
 	"github.com/google/uuid"
 )
 
+const deleteMessage = `-- name: DeleteMessage :exec
+DELETE FROM messages
+WHERE id = $1
+`
+
+func (q *Queries) DeleteMessage(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deleteMessage, id)
+	return err
+}
+
 const getMessages = `-- name: GetMessages :many
 SELECT id, sent_at, sender_id, receiver_id, content FROM messages
 WHERE sender_id = $1 and receiver_id = $2

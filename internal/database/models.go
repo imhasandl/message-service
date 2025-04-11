@@ -18,6 +18,15 @@ type Comment struct {
 	CommentText string
 }
 
+type DeviceToken struct {
+	ID          uuid.UUID
+	UserID      uuid.UUID
+	DeviceToken string
+	DeviceType  string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
 type Message struct {
 	ID         uuid.UUID
 	SentAt     time.Time
@@ -30,7 +39,7 @@ type Post struct {
 	ID        uuid.UUID
 	CreatedAt time.Time
 	UpdatedAt time.Time
-	PostedBy  string
+	PostedBy  uuid.UUID
 	Body      string
 	Likes     int32
 	Views     int32
@@ -52,13 +61,16 @@ type Report struct {
 }
 
 type User struct {
-	ID               uuid.UUID
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
-	Email            string
-	Password         string
-	Username         string
-	IsPremium        bool
-	VerificationCode int32
-	IsVerified       bool
+	ID                     uuid.UUID
+	CreatedAt              time.Time
+	UpdatedAt              time.Time
+	Email                  string
+	Password               string
+	Username               string
+	Subscribers            []uuid.UUID
+	SubscribedTo           []uuid.UUID
+	IsPremium              bool
+	VerificationCode       int32
+	VerificationExpireTime time.Time
+	IsVerified             bool
 }
