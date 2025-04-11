@@ -138,6 +138,33 @@ func (s *server) GetMessages(ctx context.Context, req *pb.GetMessagesRequest) (*
 	}, nil
 }
 
+func (s *server) ChangeMessage(ctx context.Context, req *pb.ChangeMessageRequest) (*pb.ChangeMessageResponse, error) {
+	messageID, err := uuid.Parse(req.GetId())
+	if err != nil {
+		return nil, helper.RespondWithErrorGRPC(ctx, codes.InvalidArgument, "can't parse message id - ChangeMessage", err)
+	}
+
+	changeMessageParams := database.ChangeMessageParams{
+		ID: messageID,
+		Content: req.GetContent(),
+	}
+
+	message, err := s.db.ChangeMessage(ctx, changeMessageParams)
+	if err != nil {
+		return nil, helper.RespondWithErrorGRPC(ctx, codes.Internal, "can't change message - ChangeMessage", err)
+	}
+
+	return &pb.ChangeMessageResponse{
+		Message: &pb.Message{
+			Id: message.ID.String(),
+			SentAt: timestamppb.New(message.SentAt),
+			SenderId: message.SenderID.String(),
+			ReceiverId: message.ReceiverID.String(),
+			Content: message.Content,
+		},
+	}, nil
+}
+
 func (s *server) DeleteMessage(ctx context.Context, req *pb.DeleteMessageRequest) (*pb.DeleteMessageResponse, error) {
 	messageID, err := uuid.Parse(req.GetId())
 	if err != nil {
