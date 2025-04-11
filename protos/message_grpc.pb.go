@@ -24,6 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 type MessageServiceClient interface {
 	SendMessage(ctx context.Context, in *SendMessageRequest, opts ...grpc.CallOption) (*SendMessageResponse, error)
 	GetMessages(ctx context.Context, in *GetMessagesRequest, opts ...grpc.CallOption) (*GetMessagesResponse, error)
+	ChangeMessage(ctx context.Context, in *ChangeMessageRequest, opts ...grpc.CallOption) (*ChangeMessageResponse, error)
 	DeleteMessage(ctx context.Context, in *DeleteMessageRequest, opts ...grpc.CallOption) (*DeleteMessageResponse, error)
 }
 
@@ -53,6 +54,15 @@ func (c *messageServiceClient) GetMessages(ctx context.Context, in *GetMessagesR
 	return out, nil
 }
 
+func (c *messageServiceClient) ChangeMessage(ctx context.Context, in *ChangeMessageRequest, opts ...grpc.CallOption) (*ChangeMessageResponse, error) {
+	out := new(ChangeMessageResponse)
+	err := c.cc.Invoke(ctx, "/message.MessageService/ChangeMessage", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *messageServiceClient) DeleteMessage(ctx context.Context, in *DeleteMessageRequest, opts ...grpc.CallOption) (*DeleteMessageResponse, error) {
 	out := new(DeleteMessageResponse)
 	err := c.cc.Invoke(ctx, "/message.MessageService/DeleteMessage", in, out, opts...)
@@ -68,6 +78,7 @@ func (c *messageServiceClient) DeleteMessage(ctx context.Context, in *DeleteMess
 type MessageServiceServer interface {
 	SendMessage(context.Context, *SendMessageRequest) (*SendMessageResponse, error)
 	GetMessages(context.Context, *GetMessagesRequest) (*GetMessagesResponse, error)
+	ChangeMessage(context.Context, *ChangeMessageRequest) (*ChangeMessageResponse, error)
 	DeleteMessage(context.Context, *DeleteMessageRequest) (*DeleteMessageResponse, error)
 	mustEmbedUnimplementedMessageServiceServer()
 }
@@ -81,6 +92,9 @@ func (UnimplementedMessageServiceServer) SendMessage(context.Context, *SendMessa
 }
 func (UnimplementedMessageServiceServer) GetMessages(context.Context, *GetMessagesRequest) (*GetMessagesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetMessages not implemented")
+}
+func (UnimplementedMessageServiceServer) ChangeMessage(context.Context, *ChangeMessageRequest) (*ChangeMessageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ChangeMessage not implemented")
 }
 func (UnimplementedMessageServiceServer) DeleteMessage(context.Context, *DeleteMessageRequest) (*DeleteMessageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteMessage not implemented")
@@ -134,6 +148,24 @@ func _MessageService_GetMessages_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MessageService_ChangeMessage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ChangeMessageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MessageServiceServer).ChangeMessage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/message.MessageService/ChangeMessage",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MessageServiceServer).ChangeMessage(ctx, req.(*ChangeMessageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _MessageService_DeleteMessage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteMessageRequest)
 	if err := dec(in); err != nil {
@@ -166,6 +198,10 @@ var MessageService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetMessages",
 			Handler:    _MessageService_GetMessages_Handler,
+		},
+		{
+			MethodName: "ChangeMessage",
+			Handler:    _MessageService_ChangeMessage_Handler,
 		},
 		{
 			MethodName: "DeleteMessage",

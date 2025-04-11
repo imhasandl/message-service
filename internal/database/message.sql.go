@@ -11,6 +11,31 @@ import (
 	"github.com/google/uuid"
 )
 
+const changeMessage = `-- name: ChangeMessage :one
+UPDATE messages
+SET content = $2
+WHERE id = $1
+RETURNING id, sent_at, sender_id, receiver_id, content
+`
+
+type ChangeMessageParams struct {
+	ID      uuid.UUID
+	Content string
+}
+
+func (q *Queries) ChangeMessage(ctx context.Context, arg ChangeMessageParams) (Message, error) {
+	row := q.db.QueryRowContext(ctx, changeMessage, arg.ID, arg.Content)
+	var i Message
+	err := row.Scan(
+		&i.ID,
+		&i.SentAt,
+		&i.SenderID,
+		&i.ReceiverID,
+		&i.Content,
+	)
+	return i, err
+}
+
 const deleteMessage = `-- name: DeleteMessage :exec
 DELETE FROM messages
 WHERE id = $1
