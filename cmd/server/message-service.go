@@ -16,6 +16,11 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+// MessageService is an interface that defines the gRPC service methods.
+type MessageService interface {
+	pb.MessageServiceServer
+}
+
 type server struct {
 	pb.UnimplementedMessageServiceServer
 	db          *database.Queries
@@ -23,7 +28,9 @@ type server struct {
 	rabbitmq    *rabbitmq.RabbitMQ
 }
 
-func NewServer(db *database.Queries, tokenSecret string, rabbitmq *rabbitmq.RabbitMQ) *server {
+// NewServer creates and returns a new instance of the search service server.
+// It requires database queries implementation and a token secret for authentication.
+func NewServer(db *database.Queries, tokenSecret string, rabbitmq *rabbitmq.RabbitMQ) MessageService {
 	return &server{
 		pb.UnimplementedMessageServiceServer{},
 		db,
@@ -145,7 +152,7 @@ func (s *server) ChangeMessage(ctx context.Context, req *pb.ChangeMessageRequest
 	}
 
 	changeMessageParams := database.ChangeMessageParams{
-		ID: messageID,
+		ID:      messageID,
 		Content: req.GetContent(),
 	}
 
@@ -156,11 +163,11 @@ func (s *server) ChangeMessage(ctx context.Context, req *pb.ChangeMessageRequest
 
 	return &pb.ChangeMessageResponse{
 		Message: &pb.Message{
-			Id: message.ID.String(),
-			SentAt: timestamppb.New(message.SentAt),
-			SenderId: message.SenderID.String(),
+			Id:         message.ID.String(),
+			SentAt:     timestamppb.New(message.SentAt),
+			SenderId:   message.SenderID.String(),
 			ReceiverId: message.ReceiverID.String(),
-			Content: message.Content,
+			Content:    message.Content,
 		},
 	}, nil
 }

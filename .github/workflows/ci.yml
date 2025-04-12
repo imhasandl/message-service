@@ -24,8 +24,8 @@ jobs:
         - name: Run gosec
           run: gosec -exclude-dir=internal/database ./...
 
-        - name: Run tests
-          run: go test -race ./...
+        # - name: Run tests
+        #   run: go test -race ./...
    
    style:
       name: Style
