@@ -58,7 +58,7 @@ Insert a message to user into a messages table and stores that in database
 
 ```json
 {
-  "receiver_id": "id of a person who's gonna recieve the message",
+  "receiver_id": "id of a person who's gonna receive the message",
   "content": "message content"
 }
 ```
