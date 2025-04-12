@@ -105,6 +105,54 @@ Gets the messages between users. In this case the current user, who wants to see
 
 ---
 
+### ChangeMessage
+
+Changes message content in database, using id of a message.
+
+#### Request format
+
+```json
+{
+  "id": "UUID of a message",
+  "content": "New content"
+}
+```
+
+#### Response format
+
+```json
+{
+  "message": {
+    "id": "string",
+    "sent_at": "2025-04-11T19:44:23Z",
+    "sender_id": "string",
+    "receiver_id": "string",
+    "content": "new content"
+  }
+}
+```
+
+---
+
+### DeleteMessage
+
+Deletes message from db using incoming message id
+
+#### Request format
+
+```json
+{
+  "id": "UUID string of a message"
+}
+```
+
+#### Response format
+
+```json
+{
+  "status": "boolean value for the result if TRUE the message is delted successfully FALSE otherwise"
+}
+```
 
 ---
 
