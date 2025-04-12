@@ -16,6 +16,11 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+// Server represents the gRPC server for the search service.
+type Server interface {
+	pb.MessageServiceServer
+}
+
 type server struct {
 	pb.UnimplementedMessageServiceServer
 	db          *database.Queries
@@ -23,7 +28,9 @@ type server struct {
 	rabbitmq    *rabbitmq.RabbitMQ
 }
 
-func NewServer(db *database.Queries, tokenSecret string, rabbitmq *rabbitmq.RabbitMQ) *server {
+// NewServer creates and returns a new instance of the search service server.
+// It requires database queries implementation and a token secret for authentication.
+func NewServer(db *database.Queries, tokenSecret string, rabbitmq *rabbitmq.RabbitMQ) Server {
 	return &server{
 		pb.UnimplementedMessageServiceServer{},
 		db,
