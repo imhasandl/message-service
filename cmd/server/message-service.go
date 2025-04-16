@@ -152,7 +152,7 @@ func (s *server) ChangeMessage(ctx context.Context, req *pb.ChangeMessageRequest
 	}
 
 	changeMessageParams := database.ChangeMessageParams{
-		ID: messageID,
+		ID:      messageID,
 		Content: req.GetContent(),
 	}
 
@@ -163,11 +163,11 @@ func (s *server) ChangeMessage(ctx context.Context, req *pb.ChangeMessageRequest
 
 	return &pb.ChangeMessageResponse{
 		Message: &pb.Message{
-			Id: message.ID.String(),
-			SentAt: timestamppb.New(message.SentAt),
-			SenderId: message.SenderID.String(),
+			Id:         message.ID.String(),
+			SentAt:     timestamppb.New(message.SentAt),
+			SenderId:   message.SenderID.String(),
 			ReceiverId: message.ReceiverID.String(),
-			Content: message.Content,
+			Content:    message.Content,
 		},
 	}, nil
 }

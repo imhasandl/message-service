@@ -10,9 +10,9 @@ const (
 	// ExchangeName is the name of the topic exchange used for notifications.
 	ExchangeName = "notifications.topic"
 	// QueueName is the name of the queue for the notification service.
-	QueueName    = "notification_service_queue"
+	QueueName = "notification_service_queue"
 	// RoutingKey is the routing key used to bind the queue to the exchange for notification messages.
-	RoutingKey   = "message-service.notification"
+	RoutingKey = "message-service.notification"
 )
 
 // RabbitMQ encapsulates the RabbitMQ connection and channel.
