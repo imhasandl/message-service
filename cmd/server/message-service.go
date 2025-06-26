@@ -8,6 +8,7 @@ import (
 	"github.com/imhasandl/message-service/cmd/helper"
 	"github.com/imhasandl/message-service/internal/database"
 	"github.com/imhasandl/message-service/internal/rabbitmq"
+	"github.com/imhasandl/message-service/internal/redis"
 	pb "github.com/imhasandl/message-service/protos"
 	"github.com/imhasandl/post-service/cmd/auth"
 	postService "github.com/imhasandl/post-service/cmd/helper"
@@ -55,9 +56,15 @@ func (s *server) SendMessage(ctx context.Context, req *pb.SendMessageRequest) (*
 		return nil, helper.RespondWithErrorGRPC(ctx, codes.InvalidArgument, "can't parse receiver's id to uuid - SendMessage", err)
 	}
 
-	senderUserData, err := s.db.GetUserByID(ctx, userID)
+	var senderUserData database.User
+	err = redis.GetCachedUser(userID.String(), &senderUserData)
 	if err != nil {
-		return nil, helper.RespondWithErrorGRPC(ctx, codes.Internal, "can;t get sender's data by id - SendMessage", err)
+		senderUserData, err = s.db.GetUserByID(ctx, userID)
+		if err != nil {
+			return nil, helper.RespondWithErrorGRPC(ctx, codes.Internal, "can;t get sender's data by id - SendMessage", err)
+		}
+
+		redis.CacheUser(userID.String(), senderUserData)
 	}
 
 	sendMessageParams := database.SendMessageParams{
@@ -72,7 +79,14 @@ func (s *server) SendMessage(ctx context.Context, req *pb.SendMessageRequest) (*
 		return nil, helper.RespondWithErrorGRPC(ctx, codes.Internal, "can't send message via db - SendMessage", err)
 	}
 
-	// Create JSON message
+	redis.InvalidateMessagesCache(userID.String(), receiverID.String())
+	redis.InvalidateConversationList(userID.String())
+	redis.InvalidateConversationList(receiverID.String())
+	redis.InvalidateLastMessage(userID.String(), receiverID.String())
+	redis.DeleteMessageCount(userID.String(), receiverID.String())
+
+	redis.CacheLastMessage(userID.String(), receiverID.String(), message)
+
 	messageJSON, err := json.Marshal(map[string]interface{}{
 		"title":           "New Notification",
 		"sender_username": senderUserData.Username,
@@ -84,7 +98,6 @@ func (s *server) SendMessage(ctx context.Context, req *pb.SendMessageRequest) (*
 		return nil, helper.RespondWithErrorGRPC(ctx, codes.Internal, "can't marshal message to JSON - SendMessage", err)
 	}
 
-	// Publish message to RabbitMQ
 	err = s.rabbitmq.Channel.Publish(
 		rabbitmq.ExchangeName, // exchange
 		rabbitmq.RoutingKey,   // routing key
@@ -119,14 +132,22 @@ func (s *server) GetMessages(ctx context.Context, req *pb.GetMessagesRequest) (*
 		return nil, helper.RespondWithErrorGRPC(ctx, codes.InvalidArgument, "can't parse receiver's id to uuid - GetMessages", err)
 	}
 
-	getMessagesParams := database.GetMessagesParams{
-		SenderID:   userID,
-		ReceiverID: receiverID,
-	}
-
-	messages, err := s.db.GetMessages(ctx, getMessagesParams)
+	var messages []database.Message
+	err = redis.GetCachedMessages(userID.String(), receiverID.String(), &messages)
 	if err != nil {
-		return nil, helper.RespondWithErrorGRPC(ctx, codes.Internal, "can't  get messages from db - GetMessages", err)
+		getMessagesParams := database.GetMessagesParams{
+			SenderID:   userID,
+			ReceiverID: receiverID,
+		}
+
+		messages, err = s.db.GetMessages(ctx, getMessagesParams)
+		if err != nil {
+			return nil, helper.RespondWithErrorGRPC(ctx, codes.Internal, "can't get messages from db - GetMessages", err)
+		}
+
+		redis.CacheMessages(userID.String(), receiverID.String(), messages)
+
+		redis.CacheMessageCount(userID.String(), receiverID.String(), int64(len(messages)))
 	}
 
 	messagesResponse := make([]*pb.Message, len(messages))
@@ -152,7 +173,7 @@ func (s *server) ChangeMessage(ctx context.Context, req *pb.ChangeMessageRequest
 	}
 
 	changeMessageParams := database.ChangeMessageParams{
-		ID: messageID,
+		ID:      messageID,
 		Content: req.GetContent(),
 	}
 
@@ -163,11 +184,11 @@ func (s *server) ChangeMessage(ctx context.Context, req *pb.ChangeMessageRequest
 
 	return &pb.ChangeMessageResponse{
 		Message: &pb.Message{
-			Id: message.ID.String(),
-			SentAt: timestamppb.New(message.SentAt),
-			SenderId: message.SenderID.String(),
+			Id:         message.ID.String(),
+			SentAt:     timestamppb.New(message.SentAt),
+			SenderId:   message.SenderID.String(),
 			ReceiverId: message.ReceiverID.String(),
-			Content: message.Content,
+			Content:    message.Content,
 		},
 	}, nil
 }
