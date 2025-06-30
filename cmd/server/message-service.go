@@ -182,6 +182,9 @@ func (s *server) ChangeMessage(ctx context.Context, req *pb.ChangeMessageRequest
 		return nil, helper.RespondWithErrorGRPC(ctx, codes.Internal, "can't change message - ChangeMessage", err)
 	}
 
+	redis.InvalidateMessagesCache(message.SenderID.String(), message.ReceiverID.String())
+	redis.InvalidateLastMessage(message.SenderID.String(), message.ReceiverID.String())
+
 	return &pb.ChangeMessageResponse{
 		Message: &pb.Message{
 			Id:         message.ID.String(),
